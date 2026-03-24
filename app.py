@@ -47,7 +47,6 @@ client = OpenAI(api_key=api_key)
 # -----------------------------
 # Streamlit reruns app on every interaction
 # So we store messages in session_state to persist chat
-
 if "messages" not in st.session_state:
     st.session_state.messages = []  # initialize empty chat history
 
@@ -70,16 +69,18 @@ def get_ai_response(prompt: str) -> str:
         input=f"""
 You are a helpful healthcare assistant.
 
-Explain the user's question clearly in these sections:
-1. What it is (simple)
-2. What it means
-3. Why it matters
-4. Example
+Explain the user's question in this format:
+
+### What it is
+### What it means
+### Why it matters
+### Example
 
 Rules:
 - Keep it easy to understand
-- Avoid heavy medical jargon
-- Keep answer under 200 words
+- Use plain English
+- Avoid unnecessary medical jargon
+- Keep the answer under 200 words unless more detail is needed
 
 User question: {prompt}
 """
@@ -126,6 +127,31 @@ def handle_user_input(prompt: str):
 
 
 # -----------------------------
+# Sidebar
+# -----------------------------
+# Adds a professional sidebar with context for the app
+with st.sidebar:
+    st.title("📘 About")
+    st.markdown("""
+This tool helps explain:
+
+- CPT codes
+- Insurance terms
+- Basic medical billing concepts
+""")
+
+    st.markdown("---")
+    st.markdown("### Example topics")
+    st.markdown("- 99213")
+    st.markdown("- 99222")
+    st.markdown("- Deductible")
+    st.markdown("- Coinsurance")
+
+    st.markdown("---")
+    st.caption("Built with Python, Streamlit, and OpenAI")
+
+
+# -----------------------------
 # Header (UI)
 # -----------------------------
 # Main title shown on page
@@ -133,6 +159,9 @@ st.title("🏥 Healthcare AI Assistant")
 
 # Subtitle / description
 st.markdown("### 💡 Understand CPT codes & insurance terms instantly")
+
+# Disclaimer for professional presentation
+st.warning("⚠️ This tool is for educational purposes only and is not medical, billing, or legal advice.")
 
 # Horizontal divider line
 st.markdown("---")
@@ -153,8 +182,8 @@ if st.button("🗑️ Clear Chat"):
 # Section label
 st.markdown("### 🔍 Try examples:")
 
-# Create 3 columns for layout
-col1, col2, col3 = st.columns(3)
+# Create 4 columns for layout
+col1, col2, col3, col4 = st.columns(4)
 
 
 # Button 1 → CPT code
@@ -178,11 +207,17 @@ with col3:
         st.rerun()
 
 
+# Button 4 → insurance term
+with col4:
+    if st.button("Coinsurance"):
+        handle_user_input("What is coinsurance?")
+        st.rerun()
+
+
 # -----------------------------
 # Display chat history
 # -----------------------------
 # Loop through stored messages and show them
-
 for msg in st.session_state.messages:
 
     # Display message in chat bubble format
@@ -229,5 +264,5 @@ if prompt := st.chat_input("Ask about CPT codes or medical terms..."):
 # Divider
 st.markdown("---")
 
-# Footer text (portfolio branding)
-st.markdown("Built with ❤️ using Streamlit and OpenAI")
+# Footer text
+st.caption("Built with ❤️ using Streamlit and OpenAI")

@@ -52,15 +52,24 @@ if "messages" not in st.session_state:
 
 
 # -----------------------------
-# Function → AI call
+# Function → AI call with memory
 # -----------------------------
-def get_ai_response(prompt: str) -> str:
+def get_ai_response() -> str:
     """
     This function:
-    - Sends user input to OpenAI
-    - Gets response from model
-    - Returns clean output text
+    - Reads the full conversation history
+    - Sends the entire chat context to OpenAI
+    - Returns a context-aware answer
     """
+
+    # Build conversation history text
+    conversation = ""
+
+    for msg in st.session_state.messages:
+        if msg["role"] == "user":
+            conversation += f"User: {msg['content']}\n"
+        else:
+            conversation += f"Assistant: {msg['content']}\n"
 
     response = client.responses.create(
         model="gpt-5-mini",  # lightweight fast model
@@ -69,7 +78,12 @@ def get_ai_response(prompt: str) -> str:
         input=f"""
 You are a helpful healthcare assistant.
 
-Explain the user's question in this format:
+Below is the conversation so far:
+{conversation}
+
+Respond to the latest user question using the previous context if relevant.
+
+Explain the answer in this format:
 
 ### What it is
 ### What it means
@@ -81,8 +95,6 @@ Rules:
 - Use plain English
 - Avoid unnecessary medical jargon
 - Keep the answer under 200 words unless more detail is needed
-
-User question: {prompt}
 """
     )
 
@@ -97,7 +109,7 @@ def handle_user_input(prompt: str):
     """
     Handles:
     - saving user message
-    - calling AI
+    - calling AI with memory
     - saving AI response
     """
 
@@ -113,8 +125,8 @@ def handle_user_input(prompt: str):
         # Show loading spinner while AI is processing
         with st.spinner("Thinking... ⏳"):
 
-            # Call AI function
-            answer = get_ai_response(prompt)
+            # Call AI function with full memory
+            answer = get_ai_response()
 
             # Display response in UI
             st.markdown(answer)
@@ -230,32 +242,8 @@ for msg in st.session_state.messages:
 # -----------------------------
 # Input box at bottom of screen
 if prompt := st.chat_input("Ask about CPT codes or medical terms..."):
-
-    # Show user message immediately
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    # Save user message
-    st.session_state.messages.append({
-        "role": "user",
-        "content": prompt
-    })
-
-    # Show AI response
-    with st.chat_message("assistant"):
-        with st.spinner("Thinking... ⏳"):
-
-            # Call AI
-            answer = get_ai_response(prompt)
-
-            # Display response
-            st.markdown(answer)
-
-    # Save AI response
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": answer
-    })
+    handle_user_input(prompt)
+    st.rerun()
 
 
 # -----------------------------
